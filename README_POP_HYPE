@@ -1,0 +1,145 @@
+#######
+# Guid - from DeX config to pop-hype config
+#######
+
+##
+mir
+##
+In "include/popcorn/utils.h"
+//extern int popcorn_gettid(void);
+Otherwise, many warnnings.
+
+#####
+Set up ramdisk for the VM
+#####
+1 Download busybox from https://busybox.net/ (we use busybox-1.30.1 (should I push this?))
+
+2. cp config_pop_hype_busybox into the busybox folder
+$ cp config_pop_hype_busybox busybox-1.30.1/.config
+
+3. General compilation process for busybox.
+$ make
+$ make install
+
+4. Enter pophype_make_ramdisk
+$ cd pophype_make_ramdisk
+
+5. Run the script
+$ ./generate_ramdisk.sh
+
+Final product: ramdisk.gz
+Remember to modify run.sh to take this ramdisk.
+
+######
+# Rewriting needed!!!!!
+######
+
+#####
+Kernel config
+#####
+1.Support CONFIG_VIRTIO_*
+
+Log from running ./lkvm 
+ # KVM compatibility warning.
+	virtio-net device was not detected.
+	While you have requested a virtio-net device, the guest kernel did not initialize it.
+	Please make sure that the guest kernel was compiled with CONFIG_VIRTIO_NET=y enabled in .config.
+
+  # KVM compatibility warning.
+	virtio-blk device was not detected.
+	While you have requested a virtio-blk device, the guest kernel did not initialize it.
+	Please make sure that the guest kernel was compiled with CONFIG_VIRTIO_BLK=y enabled in .config.
+
+  # KVM session ended normally.
+
+Solution ref: https://www.linux-kvm.org/page/Virtio
+  Get Linux kernel with virtio drivers for the guest
+(Order matters!!!!)
+  CONFIG_VIRTIO_PCI=y (Virtualization -> PCI driver for virtio devices)
+  CONFIG_VIRTIO_BALLOON=y (Virtualization -> Virtio balloon driver)
+  CONFIG_VIRTIO_BLK=y (Device Drivers -> Block -> Virtio block driver) (NEW)
+  CONFIG_VIRTIO_NET=y (Device Drivers -> Network device support -> Virtio network driver) (NEW)
+  CONFIG_VIRTIO=y (automatically selected)
+  CONFIG_VIRTIO_RING=y (automatically selected)
+  you can safely disable SATA/SCSI and also all other nic drivers if you only use VIRTIO (disk/nic)
+
+2. Support EXT4 (it was =m)
+CONFIG_EXT4_FS=y
+
+3. Support RAMDSIK_SIZE (we use RAMDISK)
+CONFIG_BLK_DEV_RAM=y
+CONFIG_BLK_DEV_RAM_COUNT=1
+CONFIG_BLK_DEV_RAM_SIZE=19327352832 # 18G
+
+3. Support VHOST (it was =n)
+CONFIG_VHOST_NET=y
+CONFIG_VHOST_RING=y
+CONFIG_VHOST=y
+# CONFIG_VHOST_CROSS_ENDIAN_LEGACY is not set
+TODO
+
+All these are done in "popcorn_hype_x86.config"
+
+TODO: check README
+TODO: check README
+TODO: check README
+TODO: check README
+TODO: check README
+Problem:
+$ make
+Makefile:312: Skipping optional libraries: bfd GTK3 vncserver SDL aio
+make: *** No rule to make target '/usr/include/libaio.h', needed by 'builtin-balloon.o'.  Stop.
+
+Sol:
+$ sudo apt-get install libaio-dev
+
+4. Problem - DEX cannot allocate at remote if enabling MPX
+Intel MPX Diasable
+When MPX is enable, remote cannot malloc/calloc memory. The address will be GROWNDOWN and thus DSM cannot handle.
+
+
+
+######
+Programming
+######
+[NID/PID] <CPUID>
+<*>: serial (only 1 certral main thread)
+<#>: distributed threads (All threads)
+
+<.c>
+pop_utils.c
+
+<.h>
+include/popcorn/utils.h
+
+Popcorn doesn't like pthread create at remote (sometimes segfault)
+
+#####
+Compile applications
+#####
+$ ssh echo
+$ ~/share/SNU_NPB-1.0.3-pophype/NPB3.3-OMP-C
+/* Compile - static linked */
+$ make EP CLASS=C
+/* Manually cp */
+$ cp bin/xxx ~/c/pophype_make_ramdisk/bin
+
+/* Usage */
+./EP <NODE> <THREAD_PER_NODE>
+./epCO0-van-echo 1 3
+
+
+######
+Debugging
+######
+
+1. Change nodes (for developers)
+- vi run.sh (-a 1 -b 1 -x 1 -y 1 -w 4 [TODO -c 2?])
+- vi main.c
+- vi builtin-run.c (vi -t kvm_cmd_run_init)
+- vi ~/share/kernel_scripts/auto_apply_git.sh (config_pophype4node_5401.h)
+- ./apply* (download & compile kernel and reboot)
+
+2. 
+include/popcorn/debug.h:#ifdef CONFIG_POPCORN_USR_DEBUG
+./Makefile:#POP_CFLAGS += -DCONFIG_POPCORN_USR_DEBUG

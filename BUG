@@ -1,0 +1,18 @@
+
+
+
+
+
+=================
+=== hardcoded ===
+=================
+# of cpu/node
+./main.c
+nodes =* 
+./builtin-run.c
+kvm->cfg.nodes[*]
+
+./include/popcorn/utils.h
+extern int nthreads; /* Not used - only used in ./builtin-run.c & ./main.c */
+nthreads only used in ./builtin-run.c & ./main.c
+TODO check can I remove it

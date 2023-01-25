@@ -1,0 +1,410 @@
+jackchuang@echo5:~$ sudo apt install htop iotop iftop
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+htop is already the newest version.
+iftop is already the newest version.
+The following packages were automatically installed and are no longer required:
+  blt gyp libc-ares-dev libc-ares2 libjs-node-uuid libv8-3.14-dev libv8-3.14.5 node-abbrev node-ansi node-ansi-color-table
+  node-archy node-async node-block-stream node-combined-stream node-cookie-jar node-delayed-stream node-forever-agent
+  node-form-data node-fstream node-fstream-ignore node-github-url-from-git node-glob node-graceful-fs node-gyp node-inherits
+  node-ini node-json-stringify-safe node-lockfile node-lru-cache node-mime node-minimatch node-mkdirp node-mute-stream
+  node-node-uuid node-nopt node-normalize-package-data node-npmlog node-once node-osenv node-qs node-read
+  node-read-package-json node-request node-retry node-rimraf node-semver node-sha node-sigmund node-slide node-tar
+  node-tunnel-agent node-underscore node-which python-astroid python-egenix-mxdatetime python-egenix-mxtools
+  python-logilab-common python-tk tk8.6-blt2.5
+Use 'apt-get autoremove' to remove them.
+The following NEW packages will be installed:
+  iotop
+0 upgraded, 1 newly installed, 0 to remove and 380 not upgraded.
+Need to get 33.2 kB of archives.
+After this operation, 135 kB of additional disk space will be used.
+Do you want to continue? [Y/n] y
+Get:1 http://ftp.us.debian.org/debian/ jessie/main iotop amd64 0.6-1 [33.2 kB]
+Fetched 33.2 kB in 0s (209 kB/s)
+Selecting previously unselected package iotop.
+(Reading database ... 190436 files and directories currently installed.)
+Preparing to unpack .../archives/iotop_0.6-1_amd64.deb ...
+Unpacking iotop (0.6-1) ...
+Processing triggers for man-db (2.7.0.2-5) ...
+Setting up iotop (0.6-1) ...
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo apt-get install curl apt-transport-https
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+apt-transport-https is already the newest version.
+The following packages were automatically installed and are no longer required:
+  blt gyp libc-ares-dev libc-ares2 libjs-node-uuid libv8-3.14-dev libv8-3.14.5 node-abbrev node-ansi node-ansi-color-table
+  node-archy node-async node-block-stream node-combined-stream node-cookie-jar node-delayed-stream node-forever-agent
+  node-form-data node-fstream node-fstream-ignore node-github-url-from-git node-glob node-graceful-fs node-gyp node-inherits
+  node-ini node-json-stringify-safe node-lockfile node-lru-cache node-mime node-minimatch node-mkdirp node-mute-stream
+  node-node-uuid node-nopt node-normalize-package-data node-npmlog node-once node-osenv node-qs node-read
+  node-read-package-json node-request node-retry node-rimraf node-semver node-sha node-sigmund node-slide node-tar
+  node-tunnel-agent node-underscore node-which python-astroid python-egenix-mxdatetime python-egenix-mxtools
+  python-logilab-common python-tk tk8.6-blt2.5
+Use 'apt-get autoremove' to remove them.
+The following packages will be upgraded:
+  curl libcurl3
+2 upgraded, 0 newly installed, 0 to remove and 378 not upgraded.
+Need to get 463 kB of archives.
+After this operation, 3,072 B disk space will be freed.
+Get:1 http://security.debian.org/ jessie/updates/main curl amd64 7.38.0-4+deb8u16 [202 kB]
+Get:2 http://security.debian.org/ jessie/updates/main libcurl3 amd64 7.38.0-4+deb8u16 [261 kB]
+Fetched 463 kB in 0s (778 kB/s)
+Reading changelogs... Done
+(Reading database ... 190464 files and directories currently installed.)
+Preparing to unpack .../curl_7.38.0-4+deb8u16_amd64.deb ...
+Unpacking curl (7.38.0-4+deb8u16) over (7.38.0-4+deb8u12) ...
+Preparing to unpack .../libcurl3_7.38.0-4+deb8u16_amd64.deb ...
+Unpacking libcurl3:amd64 (7.38.0-4+deb8u16) over (7.38.0-4+deb8u12) ...
+deb [arch=amd64] https://download.docker.com/linux/debian jessie stable
+Processing triggers for man-db (2.7.0.2-5) ...
+Setting up libcurl3:amd64 (7.38.0-4+deb8u16) ...
+Setting up curl (7.38.0-4+deb8u16) ...
+Processing triggers for libc-bin (2.19-18+deb8u10) ...
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+OK
+jackchuang@echo5:~$ cat > /etc/apt/sources.list.d/docker.list <<END \
+> deb [arch=amd64] https://download.docker.com/linux/debian stretch stable
+> END
+-bash: /etc/apt/sources.list.d/docker.list: Permission denied
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ cat > /etc/apt/sources.list.d/docker.list <<END \
+> deb [arch=amd64] https://download.docker.com/linux/debian stretch stable
+> END
+-bash: /etc/apt/sources.list.d/docker.list: Permission denied
+jackchuang@echo5:~$ sudo cat > /etc/apt/sources.list.d/docker.list <<END deb [arch=amd64] https://download.docker.com/linux/debian stretch stableEND
+
+>
+>
+>
+> END
+-bash: /etc/apt/sources.list.d/docker.list: Permission denied
+jackchuang@echo5:~$ sudo vi /etc/apt/sources.list.d/docker.list
+jackchuang@echo5:~$ sudo ls /etc/apt/sources.list.d/docker.list
+ls: cannot access /etc/apt/sources.list.d/docker.list: No such file or directory
+jackchuang@echo5:~$ sudo ls /etc/apt/sources.list.d/
+crosstools.list       emdebian.list	  linaro-maintainers-toolchain-jessie.list	 nodesource.list       php.list
+crosstools.list.save  emdebian.list.save  linaro-maintainers-toolchain-jessie.list.save  nodesource.list.save
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo touch /etc/apt/sources.list.d/docker.list
+jackchuang@echo5:~$ sudo cat > /etc/apt/sources.list.d/docker.list <<END deb [arch=amd64] https://download.docker.com/linux/debian stretch stableEND
+
+
+
+
+END
+-bash: /etc/apt/sources.list.d/docker.list: Permission denied
+jackchuang@echo5:~$ sudo cat > /etc/apt/sources.list.d/docker.list <<END deb [arch=amd64] https://download.docker.com/linux/debian stretch stableEND
+
+
+
+
+END
+
+-bash: /etc/apt/sources.list.d/docker.list: Permission denied
+jackchuang@echo5:~$ sudo vi
+jackchuang@echo5:~$ sudo vi /etc/apt/sources.list.d/docker.list
+jackchuang@echo5:~$ arc
+-bash: arc: command not found
+jackchuang@echo5:~$ h
+-bash: h: command not found
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo apt-get update
+Ign http://ftp.us.debian.org jessie InRelease
+Hit http://ftp.us.debian.org jessie-updates InRelease
+Hit http://ppa.launchpad.net xenial InRelease
+Get:1 https://download.docker.com jessie InRelease [44.8 kB]
+Get:2 http://security.debian.org jessie/updates InRelease [44.9 kB]
+Hit http://ftp.us.debian.org jessie Release.gpg
+Hit https://deb.nodesource.com jessie InRelease
+Hit http://ftp.us.debian.org jessie Release
+Hit http://ftp.us.debian.org jessie-updates/main Sources
+Hit http://ftp.debian.org jessie-updates InRelease
+Hit http://ftp.us.debian.org jessie-updates/main amd64 Packages
+Hit http://ftp.us.debian.org jessie-updates/main Translation-en
+Get:3 https://download.docker.com jessie/stable amd64 Packages [6,177 B]
+Hit http://ppa.launchpad.net xenial/main amd64 Packages
+Get:4 https://download.docker.com jessie/stable Translation-en_US [587 B]
+Get:5 http://security.debian.org jessie/updates/main Sources [323 kB]
+Hit http://ftp.us.debian.org jessie/main Sources
+Get:6 http://security.debian.org jessie/updates/main amd64 Packages [734 kB]
+Hit http://ftp.us.debian.org jessie/main amd64 Packages
+Hit http://ftp.us.debian.org jessie/main Translation-en
+Get:7 http://security.debian.org jessie/updates/main Translation-en [372 kB]
+Hit http://ppa.launchpad.net xenial/main Translation-en
+Get:8 https://packages.sury.org jessie InRelease [6,747 B]
+Hit http://ftp.debian.org jessie-updates/main Sources
+Hit https://deb.nodesource.com jessie/main Sources
+Get:9 https://download.docker.com jessie/stable Translation-en [584 B]
+Hit http://ftp.debian.org jessie-updates/main amd64 Packages
+Get:10 https://download.docker.com jessie/stable Translation-en_US [587 B]
+Hit https://deb.nodesource.com jessie/main amd64 Packages
+Get:11 https://download.docker.com jessie/stable Translation-en [584 B]
+Hit http://ftp.debian.org jessie-updates/main Translation-en
+Get:12 https://download.docker.com jessie/stable Translation-en_US [587 B]
+Get:13 https://deb.nodesource.com jessie/main Translation-en_US [162 B]
+Get:14 https://download.docker.com jessie/stable Translation-en [584 B]
+Get:15 https://download.docker.com jessie/stable Translation-en_US [587 B]
+Get:16 https://deb.nodesource.com jessie/main Translation-en [162 B]
+Get:17 https://download.docker.com jessie/stable Translation-en [584 B]
+Get:18 https://download.docker.com jessie/stable Translation-en_US [587 B]
+Ign https://download.docker.com jessie/stable Translation-en_US
+Get:19 https://download.docker.com jessie/stable Translation-en [584 B]
+Ign https://download.docker.com jessie/stable Translation-en
+Get:20 https://deb.nodesource.com jessie/main Translation-en_US [162 B]
+Get:21 https://packages.sury.org jessie/main amd64 Packages [77.0 kB]
+Get:22 https://deb.nodesource.com jessie/main Translation-en [162 B]
+Get:23 https://deb.nodesource.com jessie/main Translation-en_US [162 B]
+Get:24 https://packages.sury.org jessie/main Translation-en_US
+Get:25 https://deb.nodesource.com jessie/main Translation-en [162 B]
+Get:26 https://deb.nodesource.com jessie/main Translation-en_US [162 B]
+Get:27 https://deb.nodesource.com jessie/main Translation-en [162 B]
+Get:28 https://deb.nodesource.com jessie/main Translation-en_US [162 B]
+Ign https://deb.nodesource.com jessie/main Translation-en_US
+Get:29 https://packages.sury.org jessie/main Translation-en
+Get:30 https://deb.nodesource.com jessie/main Translation-en [162 B]
+Ign https://deb.nodesource.com jessie/main Translation-en
+Get:31 https://packages.sury.org jessie/main Translation-en_US
+Get:32 https://packages.sury.org jessie/main Translation-en
+Get:33 https://packages.sury.org jessie/main Translation-en_US
+Get:34 https://packages.sury.org jessie/main Translation-en
+Get:35 https://packages.sury.org jessie/main Translation-en_US
+Get:36 https://packages.sury.org jessie/main Translation-en
+Get:37 https://packages.sury.org jessie/main Translation-en_US
+Ign https://packages.sury.org jessie/main Translation-en_US
+Get:38 https://packages.sury.org jessie/main Translation-en
+Ign https://packages.sury.org jessie/main Translation-en
+Fetched 1,609 kB in 3s (469 kB/s)
+Reading package lists... Done
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo apt-get install  docker-ce
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+The following packages were automatically installed and are no longer required:
+  blt gyp libc-ares-dev libc-ares2 libjs-node-uuid libv8-3.14-dev libv8-3.14.5 node-abbrev node-ansi node-ansi-color-table
+  node-archy node-async node-block-stream node-combined-stream node-cookie-jar node-delayed-stream node-forever-agent
+  node-form-data node-fstream node-fstream-ignore node-github-url-from-git node-glob node-graceful-fs node-gyp node-inherits
+  node-ini node-json-stringify-safe node-lockfile node-lru-cache node-mime node-minimatch node-mkdirp node-mute-stream
+  node-node-uuid node-nopt node-normalize-package-data node-npmlog node-once node-osenv node-qs node-read
+  node-read-package-json node-request node-retry node-rimraf node-semver node-sha node-sigmund node-slide node-tar
+  node-tunnel-agent node-underscore node-which python-astroid python-egenix-mxdatetime python-egenix-mxtools
+  python-logilab-common python-tk tk8.6-blt2.5
+Use 'apt-get autoremove' to remove them.
+The following extra packages will be installed:
+  aufs-tools cgroupfs-mount libnih-dbus1 libnih1 makedev mountall plymouth
+Suggested packages:
+  plymouth-themes
+The following NEW packages will be installed:
+  aufs-tools cgroupfs-mount docker-ce libnih-dbus1 libnih1 makedev mountall plymouth
+0 upgraded, 8 newly installed, 0 to remove and 391 not upgraded.
+Need to get 40.3 MB of archives.
+After this operation, 203 MB of additional disk space will be used.
+Do you want to continue? [Y/n] y
+Get:1 http://ftp.us.debian.org/debian/ jessie/main makedev all 2.3.1-93 [42.6 kB]
+Get:2 https://download.docker.com/linux/debian/ jessie/stable docker-ce amd64 18.06.3~ce~3-0~debian [39.7 MB]
+Get:3 http://ftp.us.debian.org/debian/ jessie/main plymouth amd64 0.9.0-9 [189 kB]
+Get:4 http://ftp.us.debian.org/debian/ jessie/main libnih1 amd64 1.0.3-4.3 [127 kB]
+Get:5 http://ftp.us.debian.org/debian/ jessie/main libnih-dbus1 amd64 1.0.3-4.3 [97.1 kB]
+Get:6 http://ftp.us.debian.org/debian/ jessie/main mountall amd64 2.54 [68.3 kB]
+Get:7 http://ftp.us.debian.org/debian/ jessie/main aufs-tools amd64 1:3.2+20130722-1.1 [92.9 kB]
+Get:8 http://ftp.us.debian.org/debian/ jessie/main cgroupfs-mount all 1.1 [4,572 B]
+Fetched 40.3 MB in 4s (9,796 kB/s)
+Selecting previously unselected package makedev.
+(Reading database ... 190464 files and directories currently installed.)
+Preparing to unpack .../makedev_2.3.1-93_all.deb ...
+Unpacking makedev (2.3.1-93) ...
+Selecting previously unselected package plymouth.
+Preparing to unpack .../plymouth_0.9.0-9_amd64.deb ...
+Unpacking plymouth (0.9.0-9) ...
+Selecting previously unselected package libnih1.
+Preparing to unpack .../libnih1_1.0.3-4.3_amd64.deb ...
+Unpacking libnih1 (1.0.3-4.3) ...
+Selecting previously unselected package libnih-dbus1.
+Preparing to unpack .../libnih-dbus1_1.0.3-4.3_amd64.deb ...
+Unpacking libnih-dbus1 (1.0.3-4.3) ...
+Selecting previously unselected package mountall.
+Preparing to unpack .../mountall_2.54_amd64.deb ...
+Unpacking mountall (2.54) ...
+Selecting previously unselected package aufs-tools.
+Preparing to unpack .../aufs-tools_1%3a3.2+20130722-1.1_amd64.deb ...
+Unpacking aufs-tools (1:3.2+20130722-1.1) ...
+Selecting previously unselected package cgroupfs-mount.
+Preparing to unpack .../cgroupfs-mount_1.1_all.deb ...
+Unpacking cgroupfs-mount (1.1) ...
+Selecting previously unselected package docker-ce.
+Preparing to unpack .../docker-ce_18.06.3~ce~3-0~debian_amd64.deb ...
+Unpacking docker-ce (18.06.3~ce~3-0~debian) ...
+
+
+Processing triggers for man-db (2.7.0.2-5) ...
+
+Processing triggers for systemd (215-17+deb8u7) ...
+Processing triggers for dbus (1.8.22-0+deb8u1) ...
+Setting up makedev (2.3.1-93) ...
+/run/udev or .udevdb or .udev presence implies active udev.  Aborting MAKEDEV invocation.
+/run/udev or .udevdb or .udev presence implies active udev.  Aborting MAKEDEV invocation.
+/run/udev or .udevdb or .udev presence implies active udev.  Aborting MAKEDEV invocation.
+Setting up plymouth (0.9.0-9) ...
+update-initramfs: deferring update (trigger activated)
+update-rc.d: warning: start and stop actions are no longer supported; falling back to defaults
+update-rc.d: warning: start and stop actions are no longer supported; falling back to defaults
+Setting up libnih1 (1.0.3-4.3) ...
+Setting up libnih-dbus1 (1.0.3-4.3) ...
+Setting up mountall (2.54) ...
+Setting up aufs-tools (1:3.2+20130722-1.1) ...
+Setting up cgroupfs-mount (1.1) ...
+Setting up docker-ce (18.06.3~ce~3-0~debian) ...
+Job for docker.service failed. See 'systemctl status docker.service' and 'journalctl -xn' for details.
+invoke-rc.d: initscript docker, action "start" failed.
+dpkg: error processing package docker-ce (--configure):
+ subprocess installed post-installation script returned error exit status 1
+Processing triggers for systemd (215-17+deb8u7) ...
+Processing triggers for initramfs-tools (0.120+deb8u3) ...
+update-initramfs: Generating /boot/initrd.img-4.4.137-popcorn-uffd+
+Processing triggers for libc-bin (2.19-18+deb8u10) ...
+Processing triggers for dbus (1.8.22-0+deb8u1) ...
+Errors were encountered while processing:
+ docker-ce
+E: Sub-process /usr/bin/dpkg returned an error code (1)
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ vi /usr/bin/dpkg
+jackchuang@echo5:~$ com
+combinediff             common_irq_affinity.sh  compat_gid_gen          compopt                 composite
+comm                    compare                 compgen                 compose                 composite-im6
+command                 compare-im6             complete                composer
+jackchuang@echo5:~$ docker
+docker                  docker-containerd-ctr   dockerd                 docker-proxy
+docker-containerd       docker-containerd-shim  docker-init             docker-runc
+jackchuang@echo5:~$ docker-
+docker-containerd       docker-containerd-shim  docker-proxy
+docker-containerd-ctr   docker-init             docker-runc
+jackchuang@echo5:~$ docker-
+docker-containerd       docker-containerd-shim  docker-proxy
+docker-containerd-ctr   docker-init             docker-runc
+jackchuang@echo5:~$ uname -s
+Linux
+jackchuang@echo5:~$ uname -m
+x86_64
+jackchuang@echo5:~$
+
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ curl -L  curl https://github.com/docker/compose/releases/download/1.23.2/docker-compose-Linux-x86_64 -o /usr/local/bin/docker-compose^C
+jackchuang@echo5:~$ ls /usr/local/bin/docker-compose
+ls: cannot access /usr/local/bin/docker-compose: No such file or directory
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-Linux-x86_64 -o /usr/local/bin/docker-compose
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   617    0   617    0     0   2363      0 --:--:-- --:--:-- --:--:--  2354
+Warning: Failed to create the file /usr/local/bin/docker-compose: Permission
+Warning: denied
+curl: (23) Failed writing body (0 != 16360)
+jackchuang@echo5:~$ curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-Linux-x86_64 -o .
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   617    0   617    0     0   4211      0 --:--:-- --:--:-- --:--:--  4226
+Warning: Failed to create the file .: Is a directory
+curl: (23) Failed writing body (0 != 16360)
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-Linux-x86_64 -o /usr/local/bin/docker-compose
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   617    0   617    0     0   3889      0 --:--:-- --:--:-- --:--:--  3880
+100 11.2M  100 11.2M    0     0  9252k      0  0:00:01  0:00:01 --:--:-- 11.3M
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ ls /usr/local/bin/docker-compose
+/usr/local/bin/docker-compose
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ docker --version && docker-compose --version
+Docker version 18.06.3-ce, build d7080c1
+-bash: /usr/local/bin/docker-compose: Permission denied
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo docker --version && docker-compose --version
+Docker version 18.06.3-ce, build d7080c1
+-bash: /usr/local/bin/docker-compose: Permission denied
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo docker --version && docker-compose --version^C
+jackchuang@echo5:~$ sudo docker-compose
+sudo: docker-compose: command not found
+jackchuang@echo5:~$ docker-compose
+-bash: /usr/local/bin/docker-compose: Permission denied
+jackchuang@echo5:~$ docker-compose
+-bash: /usr/local/bin/docker-compose: Permission denied
+jackchuang@echo5:~$ ^Ccker-compose
+jackchuang@echo5:~$ ll /usr/local/bin/docker-compose
+-rw-r--r-- 1 root root 11748168 Dec  3 12:27 /usr/local/bin/docker-compose
+jackchuang@echo5:~$ ll /usr/local/bin/docker
+ls: cannot access /usr/local/bin/docker: No such file or directory
+jackchuang@echo5:~$ which docker
+/usr/bin/docker
+jackchuang@echo5:~$ ll /usr/bin/docker
+-rwxr-xr-x 1 root root 38133480 Feb 19  2019 /usr/bin/docker
+jackchuang@echo5:~$ sudo chmod 755 /usr/local/bin/docker-compose
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+ln: failed to create symbolic link ‘/usr/bin/docker-compose’: Permission denied
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo ls -lha /usr/bin/docker-compose
+lrwxrwxrwx 1 root root 29 Dec  3 12:28 /usr/bin/docker-compose -> /usr/local/bin/docker-compose
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ chmod +x /usr/local/bin/docker-compose
+chmod: changing permissions of ‘/usr/local/bin/docker-compose’: Operation not permitted
+jackchuang@echo5:~$ sudo chmod +x /usr/local/bin/docker-compose
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ sudo ls -lha /usr/bin/docker-compose
+lrwxrwxrwx 1 root root 29 Dec  3 12:28 /usr/bin/docker-compose -> /usr/local/bin/docker-compose
+jackchuang@echo5:~$ ll /usr/local/bin/docker-compose
+-rwxr-xr-x 1 root root 11748168 Dec  3 12:27 /usr/local/bin/docker-compose
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$ docker --version && docker-compose --version
+Docker version 18.06.3-ce, build d7080c1
+
+docker-compose version 1.23.2, build 1110ad01
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+jackchuang@echo5:~$
+

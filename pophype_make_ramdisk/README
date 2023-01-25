@@ -1,0 +1,58 @@
+check ./generate_ramdisk.sh for more & correct details
+============================
+src_manual: prebuilt binaries & tools & benchmarking tools
+benchmark_src: benchmark source code
+bin_ref: just for comparing or reference
+bin: the first few prebuilt binaries?
+
+
+./generate_ramdisk.sh <1> <2> <3>
+<1>: create ramdisk from scratch (if you are not sure alway put 1, default is 0)
+<2>: create rootfs_dbg for debugging (optional)
+<3>: leverage DEBOOTSTAP cache (not important, default 0)
+If you have no idea, use ./generate_ramdisk.sh 1 1 1. It must be correct.
+
+
+Binaries needed by our ramdisk (recompile in ./bin_src)
+[preinstall]
+$ sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl libbz2-dev
+[sshd]
+https://www.tecmint.com/install-openssh-server-from-source-in-linux/
+sudo apt install libpam0g-dev libselinux1-dev
+openssh-8.1.tar.gz - cannot ./configure and make tab 8 problem
+So use openssh-8.1p1.tar.gz
+$ tar(X) openssh-8.1p1.tar.gz
+$$ cd openssh-8.1p1
+$ ./configure --with-pam
+$ make -j32
+$ file sshd
+$ file ssh-keygen
+troubleshooting:
+(Guest VM problem) sshdd sshd: no hostkeys available -- exiting.
+(Guest VM solution) ssh-keygen -A
+
+[python3.7]
+https://linuxize.com/post/how-to-install-python-3-7-on-debian-9/
+$ tar -xf Python-3.7.3.tar.xz
+$ cd Python-3.7.3
+$ ./configure --enable-optimizations
+$ make -j 32
+$ (tests take long long time...)
+$ sudo make altinstall
+$ python3.7 --version
+
+[LEMP]
+TODO - at least link
+
+[next]
+(...)
+
+
+Local host must install:
+(*/sbin/*)
+sudo apt install resolvconf
+sudo apt install haveged
+
+[Ngnix]
+$ cd bin_src/nginx-1.16.1/
+$ ./puzzlehype_configure_make_scp.sh
