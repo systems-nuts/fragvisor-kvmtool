@@ -1,0 +1,8 @@
+ramdisk_lemp_4php.gz filter=lfs diff=lfs merge=lfs -text
+ramdisk_nginx.gz filter=lfs diff=lfs merge=lfs -text
+ramdisk_NPB_ATC.gz filter=lfs diff=lfs merge=lfs -text
+ramdisk.gz filter=lfs diff=lfs merge=lfs -text
+ramdisk_lemp_1php.gz filter=lfs diff=lfs merge=lfs -text
+ramdisk_lemp_2php.gz filter=lfs diff=lfs merge=lfs -text
+ramdisk_lemp_3php.gz filter=lfs diff=lfs merge=lfs -text
+*.gz filter=lfs diff=lfs merge=lfs -text
