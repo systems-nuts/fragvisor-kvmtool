@@ -1,0 +1,923 @@
+diff --git a/README.md b/README.md
+index d57329fa391a..44f81b4fad05 100644
+--- a/README.md
++++ b/README.md
+@@ -1,3 +1,9 @@
++ATTENTION: If you are looking for the lastest release code of TSO implementation, please checkout "master-tso" branch.
++
++"master-tso-develop" is a private & development branch which is only used for synchronizing/backing up code on different machines.
++
++----------------------------------------------
++
+ Popcorn Linux for Distributed Thread Execution
+ ----------------------------------------------
+ 
+diff --git a/include/popcorn/pcn_kmsg.h b/include/popcorn/pcn_kmsg.h
+index a00cd2f9a1bd..41edb6664bb0 100644
+--- a/include/popcorn/pcn_kmsg.h
++++ b/include/popcorn/pcn_kmsg.h
+@@ -81,7 +81,7 @@ struct pcn_kmsg_hdr {
+ 	(((struct pcn_kmsg_message *)x)->header.from_nid)
+ #define PCN_KMSG_SIZE(x) (sizeof(struct pcn_kmsg_hdr) + x)
+ 
+-#define PCN_KMSG_MAX_SIZE (64UL << 10)
++#define PCN_KMSG_MAX_SIZE (32UL << 10)
+ #define PCN_KMSG_MAX_PAYLOAD_SIZE \
+ 	(PCN_KMSG_MAX_SIZE - sizeof(struct pcn_kmsg_hdr))
+ 
+diff --git a/kernel/Kconfig.popcorn b/kernel/Kconfig.popcorn
+index c6f67896cc30..d596f41d9c58 100644
+--- a/kernel/Kconfig.popcorn
++++ b/kernel/Kconfig.popcorn
+@@ -66,6 +66,10 @@ config POPCORN_STAT_PGFAULTS
+ 	depends on POPCORN_STAT
+ 	default n
+ 
++config POPCORN_STAT_MSG
++	bool "MSG handling"
++	depends on POPCORN_STAT
++	default n
+ 
+ comment "Popcorn is not currently supported on this architecture"
+ 	depends on !ARCH_SUPPORTS_POPCORN
+diff --git a/kernel/popcorn/page_server.c b/kernel/popcorn/page_server.c
+index ed4ca90efe99..fccbc78a09b1 100644
+--- a/kernel/popcorn/page_server.c
++++ b/kernel/popcorn/page_server.c
+@@ -37,6 +37,40 @@
+ 
+ #include "trace_events.h"
+ 
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++#define MICROSECOND 1000000
++atomic64_t mm_cnt = ATOMIC64_INIT(0);
++atomic64_t mm_time_ns = ATOMIC64_INIT(0);
++
++/* local origin & it has to bring from remote (RW)*/
++//atomic64_t ptef_ns = ATOMIC64_INIT(0);
++//atomic64_t ptef_cnt = ATOMIC64_INIT(0);
++/* local_origin & __claim_remote_page(1)(!pg_mine)(RW) */
++atomic64_t clr_ns = ATOMIC64_INIT(0);
++atomic64_t clr_cnt = ATOMIC64_INIT(0);
++
++/* local_origin & !pg_mine & !send_revoke_msg & is_page */
++atomic64_t fp_ns = ATOMIC64_INIT(0);
++atomic64_t fp_cnt = ATOMIC64_INIT(0);
++
++/* local_origin & !pg_mine & !send_revoke_msg & is_page */
++atomic64_t fpin_ns = ATOMIC64_INIT(0);
++atomic64_t fpin_cnt = ATOMIC64_INIT(0);
++atomic64_t fpinh_ns = ATOMIC64_INIT(0);
++atomic64_t fpinh_cnt = ATOMIC64_INIT(0);
++
++/* __claim_local_page(pg_mine) & origin */
++atomic64_t inv_ns = ATOMIC64_INIT(0);
++atomic64_t inv_cnt = ATOMIC64_INIT(0);
++
++/* process_page_invalidate_request */
++atomic64_t invh_ns = ATOMIC64_INIT(0);
++atomic64_t invh_cnt = ATOMIC64_INIT(0);
++/* full rr fault time */
++atomic64_t fph_ns = ATOMIC64_INIT(0);
++atomic64_t fph_cnt = ATOMIC64_INIT(0);
++#endif
++
+ inline void page_server_start_mm_fault(unsigned long address)
+ {
+ #ifdef CONFIG_POPCORN_STAT_PGFAULTS
+@@ -66,11 +100,109 @@ inline int page_server_end_mm_fault(int ret)
+ 				current->fault_address, ret,
+ 				current->fault_retry, ktime_to_ns(dt));
+ 		current->fault_address = 0;
++        if (ktime_to_ns(dt) < 1000 * MICROSECOND) {
++            atomic64_add(ktime_to_ns(dt), &mm_time_ns);
++            atomic64_inc(&mm_cnt);
++        }
+ 	}
+ #endif
+ 	return ret;
+ }
+ 
++void pf_time_stat(struct seq_file *seq, void *v)
++{
++#ifdef CONFIG_POPCORN_STAT
++	if (seq) {
++		seq_printf(seq, "%4s  %10ld.%06ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++					"mm", (atomic64_read(&mm_time_ns) / 1000) / MICROSECOND,
++							(atomic64_read(&mm_time_ns) / 1000)  % MICROSECOND,
++					"cnt", atomic64_read(&mm_cnt),
++					"per", atomic64_read(&mm_cnt) ?
++					 atomic64_read(&mm_time_ns)/atomic64_read(&mm_cnt)/1000 : 0);
++
++		//seq_printf(seq, "%4s  %10ld.%06ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++		//			"ptef", (atomic64_read(&ptef_ns) / 1000) / MICROSECOND,
++		//					(atomic64_read(&ptef_ns) / 1000)  % MICROSECOND,
++		//			"cnt", atomic64_read(&ptef_cnt),
++		//			"per", atomic64_read(&ptef_cnt) ?
++		//			 atomic64_read(&ptef_ns)/atomic64_read(&ptef_cnt)/1000 : 0);
++
++		seq_printf(seq, "%4s  %10ld.%06ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++					"clr", (atomic64_read(&clr_ns) / 1000) / MICROSECOND,
++							(atomic64_read(&clr_ns) / 1000)  % MICROSECOND,
++					"cnt", atomic64_read(&clr_cnt),
++					"per", atomic64_read(&clr_cnt) ?
++					 atomic64_read(&clr_ns)/atomic64_read(&clr_cnt)/1000 : 0);
++
++		/* R: only page (R+!pg_mine) */
++		seq_printf(seq, "%4s  %10ld.%06ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++			"fp", (atomic64_read(&fp_ns) / 1000) / MICROSECOND,
++					(atomic64_read(&fp_ns) / 1000)  % MICROSECOND,
++			"cnt", atomic64_read(&fp_cnt),
++			"per", atomic64_read(&fp_cnt) ?
++			 atomic64_read(&fp_ns)/atomic64_read(&fp_cnt)/1000 : 0);
++
++		seq_printf(seq, "%4s  %10ld.%06ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++			"fph", (atomic64_read(&fph_ns) / 1000) / MICROSECOND,
++					(atomic64_read(&fph_ns) / 1000)  % MICROSECOND,
++			"cnt", atomic64_read(&fph_cnt),
++			"per", atomic64_read(&fph_cnt) ?
++			 atomic64_read(&fph_ns)/atomic64_read(&fph_cnt)/1000 : 0);
++
++		/* W: only inv */
++		seq_printf(seq, "%4s  %10ld.%06ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++			"inv", (atomic64_read(&inv_ns) / 1000) / MICROSECOND,
++					(atomic64_read(&inv_ns) / 1000)  % MICROSECOND,
++			"cnt", atomic64_read(&inv_cnt),
++			"per", atomic64_read(&inv_cnt) ?
++			 atomic64_read(&inv_ns)/atomic64_read(&inv_cnt)/1000 : 0);
++
++		seq_printf(seq, "%4s  %10ld.%06ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++			"invh", (atomic64_read(&invh_ns) / 1000) / MICROSECOND,
++					(atomic64_read(&invh_ns) / 1000)  % MICROSECOND,
++			"cnt", atomic64_read(&invh_cnt),
++			"per", atomic64_read(&invh_cnt) ?
++			 atomic64_read(&invh_ns)/atomic64_read(&invh_cnt)/1000 : 0);
++
++		/* W: page + inv */
++		seq_printf(seq, "%4s  %10ld.%06ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++			"fpiv", (atomic64_read(&fpin_ns) / 1000) / MICROSECOND,
++					(atomic64_read(&fpin_ns) / 1000)  % MICROSECOND,
++			"cnt", atomic64_read(&fpin_cnt),
++			"per", atomic64_read(&fpin_cnt) ?
++			 atomic64_read(&fpin_ns)/atomic64_read(&fpin_cnt)/1000 : 0);
++		seq_printf(seq, "%5s  %9ld.%06ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++			"fpivh", (atomic64_read(&fpinh_ns) / 1000) / MICROSECOND,
++					(atomic64_read(&fpinh_ns) / 1000)  % MICROSECOND,
++			"cnt", atomic64_read(&fpinh_cnt),
++			"per", atomic64_read(&fpinh_cnt) ?
++			 atomic64_read(&fpinh_ns)/atomic64_read(&fpinh_cnt)/1000 : 0);
++	} else {
++        atomic64_set(&mm_cnt, 0);
++        atomic64_set(&mm_time_ns, 0);
++
++		//atomic64_set(&ptef_cnt, 0);
++		//atomic64_set(&ptef_ns, 0);
++		atomic64_set(&clr_cnt, 0);
++		atomic64_set(&clr_ns, 0);
++		atomic64_set(&fp_ns, 0);
++		atomic64_set(&fp_cnt, 0);
++		atomic64_set(&fph_ns, 0);
++		atomic64_set(&fph_cnt, 0);
++
++		atomic64_set(&inv_cnt, 0);
++		atomic64_set(&inv_ns, 0);
++		atomic64_set(&invh_cnt, 0);
++		atomic64_set(&invh_ns, 0);
++
++		atomic64_set(&fpin_ns, 0);
++		atomic64_set(&fpin_cnt, 0);
++		atomic64_set(&fpinh_ns, 0);
++		atomic64_set(&fpinh_cnt, 0);
++	}
++#endif
++}
++
+ static inline int __fault_hash_key(unsigned long address)
+ {
+ 	return (address >> PAGE_SHIFT) % FAULTS_HASH;
+@@ -859,6 +991,9 @@ out:
+ 
+ static void process_page_invalidate_request(struct work_struct *work)
+ {
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	ktime_t dt, invh_end, invh_start = ktime_get();
++#endif
+ 	START_KMSG_WORK(page_invalidate_request_t, req, work);
+ 	page_invalidate_response_t *res;
+ 	struct task_struct *tsk;
+@@ -886,6 +1021,13 @@ static void process_page_invalidate_request(struct work_struct *work)
+ 
+ 	put_task_struct(tsk);
+ 
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	invh_end = ktime_get();
++	dt = ktime_sub(invh_end, invh_start);
++	atomic64_add(ktime_to_ns(dt), &invh_ns);
++	atomic64_inc(&invh_cnt);
++#endif
++
+ out_free:
+ 	END_KMSG_WORK(req);
+ }
+@@ -1063,7 +1205,7 @@ static remote_page_response_t *__fetch_page_from_origin(struct task_struct *tsk,
+ 	return rp;
+ }
+ 
+-static int __claim_remote_page(struct task_struct *tsk, struct mm_struct *mm, struct vm_area_struct *vma, unsigned long addr, unsigned long fault_flags, struct page *page)
++static int __claim_remote_page(struct task_struct *tsk, struct mm_struct *mm, struct vm_area_struct *vma, unsigned long addr, unsigned long fault_flags, struct page *page, int local_origin)
+ {
+ 	int peers;
+ 	unsigned int random = prandom_u32();
+@@ -1077,6 +1219,13 @@ static int __claim_remote_page(struct task_struct *tsk, struct mm_struct *mm, st
+ 	unsigned long offset;
+ 	struct page *pip = __get_page_info_page(mm, addr, &offset);
+ 	unsigned long *pi = (unsigned long *)kmap(pip) + offset;
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	//int revoke = 0;
++	int page_trans = 0;
++	ktime_t fp_start;
++	if (local_origin) /* aka !pg_mine */
++		fp_start = ktime_get();
++#endif
+ 	BUG_ON(!pip);
+ 
+ 	peers = bitmap_weight(pi, MAX_POPCORN_NODES);
+@@ -1106,6 +1255,11 @@ static int __claim_remote_page(struct task_struct *tsk, struct mm_struct *mm, st
+ 			if (fault_for_write(fault_flags)) {
+ 				clear_bit(nid, pi);
+ 				__revoke_page_ownership(tsk, nid, pid, addr, ws->id);
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++				//revoke = 1;
++				//BUG_ON(revoke && "Two nodes shouldn't send stand along inv");
++				BUG_ON("Two nodes shouldn't send stand along inv");
++#endif
+ 			}
+ 		}
+ 		if (--peers == 0) break;
+@@ -1127,12 +1281,38 @@ static int __claim_remote_page(struct task_struct *tsk, struct mm_struct *mm, st
+ 		kunmap(page);
+ 		flush_dcache_page(page);
+ 		__SetPageUptodate(page);
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++		page_trans = 1;
++#endif
+ 	}
+ 	pcn_kmsg_done(rp);
+ 
+ 	if (rh) pcn_kmsg_unpin_rdma_buffer(rh);
+ 	__put_task_remote(rc);
+ 	kunmap(pip);
++
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	//if (!my_nid && local_origin && !revoke && page_trans) {
++	//if (!my_nid && local_origin && page_trans) {
++	if (!my_nid && local_origin) {
++		if (fault_for_write(fault_flags)) { /* page + inv */
++			ktime_t dt, fp_end = ktime_get();
++			dt = ktime_sub(fp_end, fp_start);
++			atomic64_add(ktime_to_ns(dt), &fpin_ns);
++			atomic64_inc(&fpin_cnt);
++		} else { /* page + !inv  */
++		//if (page_trans) {
++			ktime_t dt, fp_end = ktime_get();
++			dt = ktime_sub(fp_end, fp_start);
++			atomic64_add(ktime_to_ns(dt), &fp_ns);
++			atomic64_inc(&fp_cnt);
++		//}
++		}
++
++		if (!page_trans)
++			BUG_ON("!pg_mine must transfer page");
++	}
++#endif
+ 	return 0;
+ }
+ 
+@@ -1144,6 +1324,10 @@ static void __claim_local_page(struct task_struct *tsk, unsigned long addr, int
+ 	struct page *pip = __get_page_info_page(mm, addr, &offset);
+ 	unsigned long *pi;
+ 	int peers;
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	int is_inv = 0;
++	ktime_t dt, inv_end, inv_start;
++#endif
+ 
+ 	if (!pip) return; /* skip claiming non-distributed page */
+ 	pi = (unsigned long *)kmap(pip) + offset;
+@@ -1158,6 +1342,10 @@ static void __claim_local_page(struct task_struct *tsk, unsigned long addr, int
+ 
+ 	if (test_bit(my_nid, pi) && except_nid != my_nid) peers--;
+ 
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	inv_start = ktime_get();
++#endif
++
+ 	if (peers > 0) {
+ 		int nid;
+ 		struct remote_context *rc = get_task_remote(tsk);
+@@ -1169,11 +1357,24 @@ static void __claim_local_page(struct task_struct *tsk, unsigned long addr, int
+ 
+ 			clear_bit(nid, pi);
+ 			__revoke_page_ownership(tsk, nid, pid, addr, ws->id);
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++			is_inv = 1;
++#endif
+ 		}
+ 		put_task_remote(tsk);
+ 
+ 		wait_at_station(ws);
+ 	}
++
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	if (is_inv) {
++		inv_end = ktime_get();
++		dt = ktime_sub(inv_end, inv_start);
++		atomic64_add(ktime_to_ns(dt), &inv_ns);
++		atomic64_inc(&inv_cnt);
++	}
++#endif
++
+ 	kunmap(pip);
+ }
+ 
+@@ -1366,7 +1567,7 @@ again:
+ 			grant = true;
+ 		} else {
+ 			if (!page_is_mine(mm, addr)) {
+-				__claim_remote_page(tsk, mm, vma, addr, fault_flags, page);
++				__claim_remote_page(tsk, mm, vma, addr, fault_flags, page, 0);
+ 			} else {
+ 				if (fault_for_write(fault_flags))
+ 					__claim_local_page(tsk, addr, my_nid);
+@@ -1430,6 +1631,10 @@ static void process_remote_page_request(struct work_struct *work)
+ 	int res_size;
+ 	enum pcn_kmsg_type res_type;
+ 	int down_read_retry = 0;
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	int rr = 0;
++	ktime_t fph_start = ktime_get();
++#endif
+ 
+ 	if (TRANSFER_PAGE_WITH_RDMA) {
+ 		res = pcn_kmsg_get(sizeof(remote_page_response_short_t));
+@@ -1470,6 +1675,10 @@ again:
+ 
+ 	if (tsk->at_remote) {
+ 		res->result = __handle_remotefault_at_remote(tsk, mm, vma, req, res);
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++		if (res->result == 0)
++			rr = 1;
++#endif
+ 	} else {
+ 		res->result = __handle_remotefault_at_origin(tsk, mm, vma, req, res);
+ 	}
+@@ -1509,6 +1718,14 @@ out:
+ 	pcn_kmsg_post(res_type, from_nid, res, res_size);
+ 
+ 	END_KMSG_WORK(req);
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	if (rr) {
++		ktime_t dt, fph_end = ktime_get();
++		dt = ktime_sub(fph_end, fph_start);
++		atomic64_add(ktime_to_ns(dt), &fph_ns);
++		atomic64_inc(&fph_cnt);
++	}
++#endif
+ }
+ 
+ 
+@@ -1565,7 +1782,7 @@ retry:
+ 
+ 	if (leader && !page_is_mine(mm, addr)) {
+ 		struct page *page = get_normal_page(vma, addr, pte);
+-		__claim_remote_page(current, mm, vma, addr, fault_flags, page);
++		__claim_remote_page(current, mm, vma, addr, fault_flags, page, 0);
+ 
+ 		spin_lock(ptl);
+ 		__make_pte_valid(mm, vma, addr, fault_flags, pte);
+@@ -1605,6 +1822,10 @@ static int __handle_localfault_at_remote(struct mm_struct *mm,
+ 	struct fault_handle *fh;
+ 	bool leader;
+ 	remote_page_response_t *rp;
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	ktime_t fp_start, fpin_start;
++	ktime_t dt, inv_end, inv_start;
++#endif
+ 
+ 	if (anon_vma_prepare(vma)) {
+ 		BUG_ON("Cannot prepare vma for anonymous page");
+@@ -1646,8 +1867,44 @@ static int __handle_localfault_at_remote(struct mm_struct *mm,
+ 	}
+ 	get_page(page);
+ 
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	fp_start = fpin_start = inv_start = ktime_get();
++#endif
++
+ 	rp = __fetch_page_from_origin(current, vma, addr, fault_flags, page);
+ 
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++		if (page_is_mine(mm, addr)) {
++			if (fault_for_write(fault_flags)) {
++				if (rp->result == VM_FAULT_CONTINUE) { /* W: inv lat */
++					inv_end = ktime_get();
++					dt = ktime_sub(inv_end, inv_start);
++					atomic64_add(ktime_to_ns(dt), &inv_ns);
++					atomic64_inc(&inv_cnt);
++				} else if (!rp->result) { /* W: inv + page transferred */
++					// X -> W
++					ktime_t dt, fpin_end = ktime_get();
++					dt = ktime_sub(fpin_end, fpin_start);
++					atomic64_add(ktime_to_ns(dt), &fpin_ns);
++					atomic64_inc(&fpin_cnt);
++				}
++			}
++		} else { /* fp only page */
++			if (fault_for_read(fault_flags)) {
++				ktime_t dt, fp_end = ktime_get();;
++				dt = ktime_sub(fp_end, fp_start);
++				atomic64_add(ktime_to_ns(dt), &fp_ns);
++				atomic64_inc(&fp_cnt);
++			}
++			if (fault_for_write(fault_flags)) { /* W: inv + page transferred */
++					ktime_t dt, fpin_end = ktime_get();
++					dt = ktime_sub(fpin_end, fpin_start);
++					atomic64_add(ktime_to_ns(dt), &fpin_ns);
++					atomic64_inc(&fpin_cnt);
++		}
++	}
++#endif
++
+ 	if (rp->result && rp->result != VM_FAULT_CONTINUE) {
+ 		if (rp->result != VM_FAULT_RETRY)
+ 			PGPRINTK("  [%d] failed 0x%x\n", current->pid, rp->result);
+@@ -1748,6 +2005,10 @@ static int __handle_localfault_at_origin(struct mm_struct *mm,
+ 
+ 	struct fault_handle *fh;
+ 	bool leader;
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	bool remote_fault = false;
++	//ktime_t ptef_start = ktime_get();
++#endif
+ 
+ 	ptl = pte_lockptr(mm, pmd);
+ 	spin_lock(ptl);
+@@ -1811,9 +2072,19 @@ static int __handle_localfault_at_origin(struct mm_struct *mm,
+ 		}
+ 	} else {
+ 		struct page *page = vm_normal_page(vma, addr, pte_val);
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++		ktime_t dt, clr_end, clr_start = ktime_get();
++#endif
+ 		BUG_ON(!page);
+ 
+-		__claim_remote_page(current, mm, vma, addr, fault_flags, page);
++		__claim_remote_page(current, mm, vma, addr, fault_flags, page, 1);
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++		clr_end = ktime_get();
++		dt = ktime_sub(clr_end, clr_start);
++		atomic64_add(ktime_to_ns(dt), &clr_ns);
++		atomic64_inc(&clr_cnt);
++		remote_fault = true;
++#endif
+ 
+ 		spin_lock(ptl);
+ 		__make_pte_valid(mm, vma, addr, fault_flags, pte);
+@@ -1826,6 +2097,15 @@ static int __handle_localfault_at_origin(struct mm_struct *mm,
+ out_wakeup:
+ 	__finish_fault_handling(fh);
+ 
++#ifdef CONFIG_POPCORN_STAT_PGFAULTS
++	if (remote_fault) {
++		//ktime_t dt, ptef_end = ktime_get();
++		//dt = ktime_sub(ptef_end, ptef_start);
++		//atomic64_add(ktime_to_ns(dt), &ptef_ns);
++		//atomic64_inc(&ptef_cnt);
++	}
++#endif
++
+ 	return 0;
+ }
+ 
+diff --git a/kernel/popcorn/pcn_kmsg.c b/kernel/popcorn/pcn_kmsg.c
+index 56fba5383890..5aecacce126f 100644
+--- a/kernel/popcorn/pcn_kmsg.c
++++ b/kernel/popcorn/pcn_kmsg.c
+@@ -46,29 +46,77 @@ EXPORT_SYMBOL(pcn_kmsg_unregister_callback);
+ static atomic_t __nr_outstanding_requests[PCN_KMSG_TYPE_MAX] = { ATOMIC_INIT(0) };
+ #endif
+ 
++#define ITERS 1000002
++#define ITER 1000000
+ void pcn_kmsg_process(struct pcn_kmsg_message *msg)
+ {
+ 	pcn_kmsg_cbftn ftn;
+-
++//	static int cnt = 0;
++#ifdef CONFIG_POPCORN_STAT
++	//ktime_t dt1, t1e, t1s;
++	ktime_t dt2, t2e, t2s;
++	ktime_t dt3, t3e, t3s;
++	ktime_t dt4, t4e, t4s;
++	static long long t2 = 0, t3 = 0, t4 = 0;
++
++	t2s = ktime_get();
++#endif
+ #ifdef CONFIG_POPCORN_CHECK_SANITY
+ 	BUG_ON(msg->header.type < 0 || msg->header.type >= PCN_KMSG_TYPE_MAX);
+ 	BUG_ON(msg->header.size < 0 || msg->header.size > PCN_KMSG_MAX_SIZE);
+-	if (atomic_inc_return(__nr_outstanding_requests + msg->header.type) > 64) {
++	if (atomic_inc_return(__nr_outstanding_requests + msg->header.type) > 96) {
+ 		if (WARN_ON_ONCE("leaking received messages, ")) {
+-			printk("type %d\n", msg->header.type);
++			//printk("type %d\n", msg->header.type);
+ 		}
+ 	}
+ #endif
+ 	account_pcn_message_recv(msg);
++#ifdef CONFIG_POPCORN_STAT
++	t2e = ktime_get();
++	t2 += ktime_to_ns(ktime_sub(t2e, t2s));
+ 
++	t3s = ktime_get();
++#endif
+ 	ftn = pcn_kmsg_cbftns[msg->header.type];
++#ifdef CONFIG_POPCORN_STAT
++	t3e = ktime_get();
++	t3 += ktime_to_ns(ktime_sub(t3e, t3s));
+ 
++	t4s = ktime_get();
++#endif
+ 	if (ftn != NULL) {
+ 		ftn(msg);
+ 	} else {
+ 		printk(KERN_ERR"No callback registered for %d\n", msg->header.type);
+ 		pcn_kmsg_done(msg);
+ 	}
++#ifdef CONFIG_POPCORN_STAT
++	t4e = ktime_get();
++	t4 += ktime_to_ns(ktime_sub(t4e, t4s));
++#if 0
++	if (cnt <= 2 ) {
++		t2 = 0; t3 = 0; t4 = 0;
++	}
++
++	if (cnt >= ITERS) {
++		//printk("%s(): %d\n", __func__, cnt);
++		printk("%s(): t2 %lld ns %lld us!!!\n",
++						__func__,
++						t2 / ITER,
++						t2 / ITER / 1000);
++		printk("%s(): t3 %lld ns %lld us!!!\n",
++						__func__,
++						t3 / ITER,
++						t3 / ITER / 1000);
++		printk("%s(): t4 %lld ns %lld us!!!\n",
++						__func__,
++						t4 / ITER,
++						t4 / ITER / 1000);
++		// TODO jack
++	}
++#endif
++#endif
++
+ }
+ EXPORT_SYMBOL(pcn_kmsg_process);
+ 
+diff --git a/kernel/popcorn/stat.c b/kernel/popcorn/stat.c
+index fc7e62f3c644..37a7584b1f62 100644
+--- a/kernel/popcorn/stat.c
++++ b/kernel/popcorn/stat.c
+@@ -28,6 +28,8 @@ const char *pcn_kmsg_type_name[PCN_KMSG_TYPE_MAX] = {
+ 	[PCN_KMSG_TYPE_VMA_INFO_REQUEST] = "VMA info",
+ 	[PCN_KMSG_TYPE_VMA_OP_REQUEST] = "VMA op",
+ 	[PCN_KMSG_TYPE_REMOTE_PAGE_REQUEST] = "remote page",
++	[PCN_KMSG_TYPE_REMOTE_PAGE_RESPONSE] = "w/ page",
++	[PCN_KMSG_TYPE_REMOTE_PAGE_RESPONSE_SHORT] = "w/o page",
+ 	[PCN_KMSG_TYPE_PAGE_INVALIDATE_REQUEST] = "invalidate",
+ 	[PCN_KMSG_TYPE_FUTEX_REQUEST] = "futex",
+ };
+@@ -61,6 +63,7 @@ void account_pcn_rdma_read(size_t size)
+ }
+ 
+ void fh_action_stat(struct seq_file *seq, void *);
++extern void pf_time_stat(struct seq_file *seq, void *v);
+ 
+ static int __show_stats(struct seq_file *seq, void *v)
+ {
+@@ -113,13 +116,15 @@ static int __show_stats(struct seq_file *seq, void *v)
+ 
+ #ifdef CONFIG_POPCORN_STAT
+ 	seq_printf(seq, "-----------------------------------------------\n");
+-	for (i = PCN_KMSG_TYPE_STAT_START + 1; i < PCN_KMSG_TYPE_STAT_END; i++) {
++	//for (i = PCN_KMSG_TYPE_STAT_START + 1; i < PCN_KMSG_TYPE_STAT_END; i++) {
++	for (i = PCN_KMSG_TYPE_REMOTE_PAGE_REQUEST; i < PCN_KMSG_TYPE_REMOTE_PAGE_FLUSH; i++) {
+ 		seq_printf(seq, POPCORN_STAT_FMT,
+ 				sent_stats[i], recv_stats[i], pcn_kmsg_type_name[i] ? : "");
+ 	}
+ 	seq_printf(seq, "---------------------------------------------------------------------------\n");
+ 
+-	fh_action_stat(seq, v);
++	//fh_action_stat(seq, v);
++	pf_time_stat(seq, v);
+ #endif
+ 	return 0;
+ }
+@@ -141,6 +146,10 @@ static ssize_t __write_stats(struct file *file, const char __user *buffer, size_
+ 	}
+ 	fh_action_stat(NULL, NULL);
+ 
++#ifdef CONFIG_POPCORN_STAT
++	pf_time_stat(NULL, NULL);
++#endif
++
+ 	return size;
+ }
+ 
+diff --git a/kernel/popcorn/vma_server.c b/kernel/popcorn/vma_server.c
+index 354fe98d59ea..844e5a22c6d2 100644
+--- a/kernel/popcorn/vma_server.c
++++ b/kernel/popcorn/vma_server.c
+@@ -400,8 +400,9 @@ int vma_server_munmap_origin(unsigned long start, size_t len, int nid_except)
+ 		req->remote_ws = ws->id;
+ 		req->origin_pid = rc->remote_tgids[nid];
+ 
+-		VSPRINTK("  [%d] ->munmap [%d/%d] %lx+%lx\n", current->pid,
+-				req->origin_pid, nid, start, len);
++		VSPRINTK("  [%d] ->munmap [%d/%d] %lx+%lx (%lx)\n", current->pid,
++				req->origin_pid, nid, start, len,
++				instruction_pointer(current_pt_regs()));
+ 		pcn_kmsg_send(PCN_KMSG_TYPE_VMA_OP_REQUEST, nid, req, sizeof(*req));
+ 		res = wait_at_station(ws);
+ 		pcn_kmsg_done(res);
+@@ -534,8 +535,9 @@ static long __process_vma_op_at_origin(vma_op_request_t *req)
+ void process_vma_op_request(vma_op_request_t *req)
+ {
+ 	long ret = 0;
+-	VSPRINTK("\nVMA_OP_REQUEST [%d] %s %lx %lx\n", current->pid,
+-			vma_op_code_sz[req->operation], req->addr, req->len);
++	VSPRINTK("\nVMA_OP_REQUEST [%d] %s %lx %lx %lx\n", current->pid,
++			vma_op_code_sz[req->operation], req->addr, req->len,
++			instruction_pointer(current_pt_regs()));
+ 
+ 	if (current->at_remote) {
+ 		ret = __process_vma_op_at_remote(req);
+diff --git a/msg_layer/config.h b/msg_layer/config.h
+index 435283311371..60da165725eb 100644
+--- a/msg_layer/config.h
++++ b/msg_layer/config.h
+@@ -6,8 +6,39 @@
+  */
+ 
+ const char *ip_addresses[] = {
+-	/* Node 0 */ "10.4.4.100",
+-	/* Node 1 */ "10.4.4.101",
++	/* Node 0 */ "10.2.10.17",
++	/* Node 0 */ "10.2.10.16",
++	/* Node 1 */ "10.2.10.15",
++	/* Node 2 */ "10.2.10.14",
++	/* Node 0 */ "10.2.10.13",
++	/* Node 0 */ "10.2.10.12",
++	/* Node 1 */ "10.2.10.11",
++	/* Node 2 */ "10.2.10.10",
++
++//	/* Node 0 */ "10.1.10.17",
++//	/* Node 0 */ "10.1.10.16",
++//	/* Node 1 */ "10.1.10.15",
++//	/* Node 2 */ "10.1.10.14",
++//	/* Node 0 */ "10.1.10.13",
++//	/* Node 0 */ "10.1.10.12",
++//	/* Node 1 */ "10.1.10.11",
++//	/* Node 2 */ "10.1.10.10",
++
++
++//	/* Node 0 */ "10.2.10.10",
++//	/* Node 0 */ "10.2.10.11",
++//	/* Node 1 */ "10.2.10.12",
++//	/* Node 2 */ "10.2.10.13",
++//	/* Node 0 */ "10.2.10.14",
++//	/* Node 0 */ "10.2.10.15",
++//	/* Node 1 */ "10.2.10.16",
++//	/* Node 2 */ "10.2.10.17",
++
++//	/* Node 0 */ "10.1.10.17",
++//	/* Node 0 */ "10.1.10.16",
++//	/* Node 1 */ "10.1.10.15",
++//	/* Node 2 */ "10.1.10.14",
++	///* Node 3 */ "10.1.12.123",
+ 	/*   ...  */
+ };
+ 
+diff --git a/msg_layer/rdma.c b/msg_layer/rdma.c
+index 677800b00668..bbaedc5779c2 100644
+--- a/msg_layer/rdma.c
++++ b/msg_layer/rdma.c
+@@ -326,17 +326,91 @@ void rdma_kmsg_put(struct pcn_kmsg_message *msg)
+ 	__put_send_work(sw);
+ }
+ 
++#ifdef CONFIG_POPCORN_STAT_MSG
++atomic64_t recv_cq_cnt = ATOMIC64_INIT(0);
++atomic64_t rdma_write_cnt = ATOMIC64_INIT(0);
++
++atomic64_t t_cq_sig_handle = ATOMIC64_INIT(0);
++atomic64_t t_cq_handle_end = ATOMIC64_INIT(0);
++// t_cq_sig_handle = signal to __process_recv // poll_cq
++// t_cq_handle_end = after __process to ib_req_notify_cq end
++
++atomic64_t t_rdma_w_prepare = ATOMIC64_INIT(0);
++atomic64_t t_rdma_w_post = ATOMIC64_INIT(0);
++atomic64_t t_rdma_w_wait = ATOMIC64_INIT(0);
++atomic64_t t_rdma_w_clean = ATOMIC64_INIT(0);
++#define MICROSECOND 1000000
++#define NANOSECOND 1000000000
++#endif
+ void rdma_kmsg_stat(struct seq_file *seq, void *v)
+ {
+ 	if (seq) {
+ 		seq_printf(seq, POPCORN_STAT_FMT,
+ 				(unsigned long long)ring_buffer_usage(&send_buffer),
+-#ifdef CONFIG_POPCORN_STAT
++#ifdef CONFIG_POPCORN_STAT_MSG
+ 				(unsigned long long)send_buffer.peak_usage,
+ #else
+ 				0ULL,
+ #endif
+ 				"Send buffer usage");
++
++#ifdef CONFIG_POPCORN_STAT_MSG
++		/* rdma_write */
++		seq_printf(seq, "%4s  %7ld.%09ld (s)  %3s %-10ld   %3s %-6ld (ns)\n",
++            "wp", (atomic64_read(&t_rdma_w_prepare)) / NANOSECOND,
++                    (atomic64_read(&t_rdma_w_prepare)) % NANOSECOND,
++            "cnt", atomic64_read(&rdma_write_cnt),
++            "per", atomic64_read(&rdma_write_cnt) ?
++		 atomic64_read(&t_rdma_w_prepare)/atomic64_read(&rdma_write_cnt) : 0);
++		seq_printf(seq, "%4s  %7ld.%09ld (s)  %3s %-10ld   %3s %-6ld (ns)\n",
++            "wpo", (atomic64_read(&t_rdma_w_post)) / NANOSECOND,
++                    (atomic64_read(&t_rdma_w_post)) % NANOSECOND,
++            "cnt", atomic64_read(&rdma_write_cnt),
++            "per", atomic64_read(&rdma_write_cnt) ?
++		 atomic64_read(&t_rdma_w_post)/atomic64_read(&rdma_write_cnt) : 0);
++		seq_printf(seq, "%4s  %7ld.%09ld (s)  %3s %-10ld   %3s %-6ld (us)\n",
++            "wwai", (atomic64_read(&t_rdma_w_wait)) / NANOSECOND,
++                    (atomic64_read(&t_rdma_w_wait)) % NANOSECOND,
++//            "wwai", (atomic64_read(&t_rdma_w_wait) / 1000) / MICROSECOND,
++//                    (atomic64_read(&t_rdma_w_wait) / 1000) % MICROSECOND,
++            "cnt", atomic64_read(&rdma_write_cnt),
++            "per", atomic64_read(&rdma_write_cnt) ?
++	 atomic64_read(&t_rdma_w_wait)/atomic64_read(&rdma_write_cnt) / 1000 : 0);
++		seq_printf(seq, "%4s  %7ld.%09ld (s)  %3s %-10ld   %3s %-6ld (ns)\n",
++            "wcln", (atomic64_read(&t_rdma_w_clean)) / NANOSECOND,
++                    (atomic64_read(&t_rdma_w_clean)) % NANOSECOND,
++            "cnt", atomic64_read(&rdma_write_cnt),
++            "per", atomic64_read(&rdma_write_cnt) ?
++		 atomic64_read(&t_rdma_w_clean)/atomic64_read(&rdma_write_cnt) : 0);
++
++		/* cq */
++		seq_printf(seq, "%4s  %7ld.%09ld (s)  %3s %-10ld   %3s %-6ld (ns)\n",
++            "cqsi", (atomic64_read(&t_cq_sig_handle)) / NANOSECOND,
++                    (atomic64_read(&t_cq_sig_handle)) % NANOSECOND,
++            "cnt", atomic64_read(&recv_cq_cnt),
++            "per", atomic64_read(&recv_cq_cnt) ?
++		atomic64_read(&t_cq_sig_handle)/atomic64_read(&recv_cq_cnt) : 0);
++		seq_printf(seq, "%4s  %7ld.%09ld (s)  %3s %-10ld   %3s %-6ld (ns)\n",
++            "cqed", (atomic64_read(&t_cq_handle_end)) / NANOSECOND,
++                    (atomic64_read(&t_cq_handle_end)) % NANOSECOND,
++            "cnt", atomic64_read(&recv_cq_cnt),
++            "per", atomic64_read(&recv_cq_cnt) ?
++		 atomic64_read(&t_cq_handle_end)/atomic64_read(&recv_cq_cnt) : 0);
++#endif
++	} else {
++#ifdef CONFIG_POPCORN_STAT_MSG
++		atomic64_set(&recv_cq_cnt, 0);
++		atomic64_set(&rdma_write_cnt, 0);
++
++		atomic64_set(&t_cq_sig_handle, 0);
++		atomic64_set(&t_cq_handle_end, 0);
++
++		atomic64_set(&t_rdma_w_prepare, 0);
++		atomic64_set(&t_rdma_w_post, 0);
++		atomic64_set(&t_rdma_w_wait, 0);
++		atomic64_set(&t_rdma_w_clean, 0);
++
++#endif
+ 	}
+ }
+ 
+@@ -448,11 +522,16 @@ void rdma_kmsg_unpin_rdma_buffer(struct pcn_kmsg_rdma_handle *handle)
+ int rdma_kmsg_write(int to_nid, dma_addr_t rdma_addr, void *addr, size_t size, u32 rdma_key)
+ {
+ 	DECLARE_COMPLETION_ONSTACK(done);
+-	struct rdma_work *rw;
+ 	struct ib_send_wr *bad_wr = NULL;
+-
++	struct rdma_work *rw;
+ 	dma_addr_t dma_addr;
+ 	int ret;
++#ifdef CONFIG_POPCORN_STAT_MSG
++	ktime_t t5e, t5s;
++	ktime_t t4e, t4s;
++	ktime_t t3e, t3s;
++	ktime_t t2e, t2s = ktime_get();
++#endif
+ 
+ 	dma_addr = ib_dma_map_single(rdma_mr->device, addr, size, DMA_TO_DEVICE);
+ 	ret = ib_dma_mapping_error(rdma_mr->device, dma_addr);
+@@ -462,21 +541,46 @@ int rdma_kmsg_write(int to_nid, dma_addr_t rdma_addr, void *addr, size_t size, u
+ 	BUG_ON(!rw);
+ 
+ 	rw->done = &done;
++#ifdef CONFIG_POPCORN_STAT_MSG
++	t2e = ktime_get();
++	atomic64_add(ktime_to_ns(ktime_sub(t2e, t2s)), &t_rdma_w_prepare);
+ 
++	t3s = ktime_get();
++#endif
+ 	ret = ib_post_send(rdma_handles[to_nid]->qp, &rw->wr.wr, &bad_wr);
+ 	if (ret || bad_wr) {
+ 		printk("Cannot post rdma write, %d, %p\n", ret, bad_wr);
+ 		if (ret == 0) ret = -EINVAL;
+ 		goto out;
+ 	}
++#ifdef CONFIG_POPCORN_STAT_MSG
++	t3e = ktime_get();
++	atomic64_add(ktime_to_ns(ktime_sub(t3e, t3s)), &t_rdma_w_post);
++
++	t4s = ktime_get();
++#endif
+ 	/* XXX polling??? */
+ 	if (!try_wait_for_completion(&done)) {
+ 		wait_for_completion(&done);
+ 	}
++#ifdef CONFIG_POPCORN_STAT_MSG
++	t4e = ktime_get();
++	atomic64_add(ktime_to_ns(ktime_sub(t4e, t4s)), &t_rdma_w_wait);
++
++	atomic64_inc(&rdma_write_cnt);
++#endif
+ 
+ out:
++#ifdef CONFIG_POPCORN_STAT_MSG
++	t5s = ktime_get();
++#endif
+ 	ib_dma_unmap_single(rdma_mr->device, dma_addr, size, DMA_TO_DEVICE);
+ 	__put_rdma_work(rw);
++#ifdef CONFIG_POPCORN_STAT_MSG
++	t5e = ktime_get();
++	atomic64_add(ktime_to_ns(ktime_sub(t5e, t5s)), &t_rdma_w_clean);
++#endif
++
+ 	return ret;
+ }
+ 
+@@ -577,8 +681,15 @@ void cq_comp_handler(struct ib_cq *cq, void *context)
+ {
+ 	int ret;
+ 	struct ib_wc wc;
++#ifdef CONFIG_POPCORN_STAT_MSG
++	ktime_t t3e, t3s;
++	ktime_t t2e, t2s;
++#endif
+ 
+ retry:
++#ifdef CONFIG_POPCORN_STAT_MSG
++	t2s = ktime_get();
++#endif
+ 	while ((ret = ib_poll_cq(cq, 1, &wc)) > 0) {
+ 		if (wc.opcode < 0 || wc.status) {
+ 			__process_faulty_work(&wc);
+@@ -589,7 +700,14 @@ retry:
+ 			__process_sent(&wc);
+ 			break;
+ 		case IB_WC_RECV:
++#ifdef CONFIG_POPCORN_STAT_MSG
++			t2e = ktime_get();
++			atomic64_add(ktime_to_ns(ktime_sub(t2e, t2s)), &t_cq_sig_handle);
++#endif
+ 			__process_recv(&wc);
++#ifdef CONFIG_POPCORN_STAT_MSG
++			t3s = ktime_get();
++#endif
+ 			break;
+ 		case IB_WC_RDMA_WRITE:
+ 		case IB_WC_RDMA_READ:
+@@ -602,8 +720,18 @@ retry:
+ 			printk("Unknown completion op %d\n", wc.opcode);
+ 			break;
+ 		}
++#ifdef CONFIG_POPCORN_STAT_MSG
++		t2s = ktime_get();
++#endif
+ 	}
+ 	ret = ib_req_notify_cq(cq, IB_CQ_NEXT_COMP | IB_CQ_REPORT_MISSED_EVENTS);
++#ifdef CONFIG_POPCORN_STAT_MSG
++	if (wc.opcode == IB_WC_RECV) {
++		t3e = ktime_get();
++		atomic64_add(ktime_to_ns(ktime_sub(t3e, t3s)), &t_cq_handle_end);
++		atomic64_inc(&recv_cq_cnt);
++	}
++#endif
+ 	if (ret > 0) goto retry;
+ }
+ 

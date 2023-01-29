@@ -11,7 +11,7 @@
 # $3 (1/0): default: 1 - cscope -Rbqk
 #
 
-KERNEL_PATH=~/kh_tong
+KERNEL_PATH="/home/jackchuang/fragvisor-linux"
 #KERNEL_PATH=~/kh_jack # Jack development
 
 USER=/home/jackchuang/
