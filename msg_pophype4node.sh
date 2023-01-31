@@ -12,7 +12,7 @@ kernel_location="/home/jackchuang/fragvisor-linux"
 
 
 #LINUX_FOLDER=~/popcorn-kernel
-LINUX_FOLDER=~/kh_tong
+LINUX_FOLDER=~/fragvisor-linux
 TARGET_MODULE=msg_rdma.ko
 #TARGET_MODULE=msg_socket.ko
 TARGET_TEST_MODULE=msg_test.ko
