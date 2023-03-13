@@ -1,4 +1,4 @@
-The lkvm tool has to be replicated in all nodes.
+The lkvm tool has to be distributed in all nodes.
 
 The easist way to do it is using a shared file system.
 
