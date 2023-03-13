@@ -10,6 +10,7 @@ Example:
 
 ln -s /share/eurosys/fragvisor-kvmtool/ $YOURWORKING_DIR/
 
+!!!!!! It is also OK to just copy, but please let it reside in the same path in all machines!!!(and compiled)
 
 Please remember to run the ./msg_pophype4node.sh to turn on the message layer 
 
