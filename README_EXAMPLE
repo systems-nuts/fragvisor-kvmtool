@@ -25,7 +25,7 @@ In the first experiment, you would run the pre-built ramdisk image ramdisk_NPB_A
 
 Once the Fragvisor is booting, please keep press 'Enter' to allow the output generate correctly, until you see the network ping is up. 
 
-When you press 'Enter' and there is no more output, you can try use ifconfig to check the ip address of the guest Fragvisor VM
+When you press 'Enter' and there is no more output, 
 
 It takes 2 min to finish, you should see 
 
@@ -34,15 +34,22 @@ It takes 2 min to finish, you should see
 ========================
 This indicate all have done, otherwise please keep press 'Enter' even there shows stable 'bash-5.0#'
 
+you can try use ifconfig to check the ip address of the guest Fragvisor VM
+
 In our test ramdisk, it would be 10.4.4.222, you can open another extra terminal, to use ssh root@10.4.4.222 to login into this Fragvisor VM
+
+Because the origin terminal is using emulated serial port, it would be extremly slow, the ssh can make it as fast as normal VM you were expected.
 
 Once you login, you can try use a simple way to test Fragvisor. 
 
-By running  taskset -c 0/1/2/3 yes > /dev/null,  depending on which vCPU you will let this burn loop to run, while in the meantime, you might use htop/top on those echo0/1/4/5 terminal to check the CPU usage, for example, if the taskset -c 3 > /dev/null is running inside, normally the 4th vCPU of Fragvisor would be the echo1 machine, you would expect that echo1 machine will have a CPU is fully running. 
+By running  taskset -c 0/1/2/3 yes > /dev/null,  depending on which vCPU you will let this burn loop to run, 
+while in the meantime, you might use htop/top on those echo0/1/4/5 terminal to check the CPU usage, for example, 
+if the taskset -c 3 > /dev/null is running inside, normally the 4th vCPU of Fragvisor would be the echo1 machine,
+you would expect that echo1 machine will have a CPU is fully running. 
 
 
 For the different benchmark shown in the appendix of our paper, we have prepared 3 different ramdisk
-they are 1. ramdisk_NPB_ATC.gz (Nginx), 2. ramdisk_lemp_4php.gz (LEMP) 3. ramdisk_openlambda.gz
+they are 1. ramdisk_NPB_ATC.gz (Nginx), 2. ramdisk_lemp_4php.gz (LEMP) 3. ramdisk_openlambda.gz (OpenLambda)
 
 Kindly please comment in the run.sh file to choose which ramdisk you gona use. 
 
