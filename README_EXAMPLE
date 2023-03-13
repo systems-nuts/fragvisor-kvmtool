@@ -1,0 +1,47 @@
+The lkvm tool has to be replicated in all nodes.
+
+The easist way to do it is using a shared file system.
+
+In our test case, we have a /share which is shared around 4 nodes, echo0, echo1, echo4 and echo5. 
+
+We can create a soft link to the working directory or drectly using it there. 
+
+To simplified the script. we just use it in each working directory of each node.
+
+Example: 
+
+ln -s /share/eurosys/fragvisor-kvmtool/ $YOURWORKING_DIR/
+
+
+Please remember to run the ./msg_pophype4node.sh to turn on the message layer 
+
+On the first time, please use ./run.sh 1 1 0
+
+this will allow both lkvm and guest kernel to be compiled.
+
+While next time, if you didn't change the lkvm or guest kernel, you can just bypass the compilation part by doing just ./run.sh 0 0 0 
+
+You should open 4 terminals for each node. 
+
+In the first experiment, you would run the pre-built ramdisk image ramdisk_NPB_ATC.gz 
+
+Once the Fragvisor is booting, please keep press 'Enter' to allow the output generate correctly, until you see the network ping is up. 
+
+When you press 'Enter' and there is no more output, you can try use ifconfig to check the ip address of the guest Fragvisor VM
+
+In our test ramdisk, it would be 10.4.4.222, you can open another extra terminal, to use ssh root@10.4.4.222 to login into this Fragvisor VM
+
+Once you login, you can try use a simple way to test Fragvisor. 
+
+By running  taskset -c 0/1/2/3 yes > /dev/null,  depending on which vCPU you will let this burn loop to run, while in the meantime, you might use htop/top on those echo0/1/4/5 terminal to check the CPU usage, for example, if the taskset -c 3 > /dev/null is running inside, normally the 4th vCPU of Fragvisor would be the echo1 machine, you would expect that echo1 machine will have a CPU is fully running. 
+
+
+For the different benchmark shown in the appendix of our paper, we have prepared 3 different ramdisk
+they are 1. ramdisk_NPB_ATC.gz (Nginx), 2. ramdisk_lemp_4php.gz (LEMP) 3. ramdisk_openlambda.gz
+
+Kindly please comment in the run.sh file to choose which ramdisk you gona use. 
+
+This is all for our test. 
+
+Thanks.  
+ 
