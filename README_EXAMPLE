@@ -4,9 +4,7 @@ The easist way to do it is using a shared file system.
 
 In our test case, we have a /share which is shared around 4 nodes, echo0, echo1, echo4 and echo5. 
 
-We can create a soft link to the working directory or drectly using it there. 
-
-To simplified the script. we just use it in each working directory of each node.
+We can create a soft link to the working directory.
 
 Example: 
 
@@ -28,6 +26,13 @@ In the first experiment, you would run the pre-built ramdisk image ramdisk_NPB_A
 Once the Fragvisor is booting, please keep press 'Enter' to allow the output generate correctly, until you see the network ping is up. 
 
 When you press 'Enter' and there is no more output, you can try use ifconfig to check the ip address of the guest Fragvisor VM
+
+It takes 2 min to finish, you should see 
+
+========================
+| auto_setup.sh ALL DONE |
+========================
+This indicate all have done, otherwise please keep press 'Enter' even there shows stable 'bash-5.0#'
 
 In our test ramdisk, it would be 10.4.4.222, you can open another extra terminal, to use ssh root@10.4.4.222 to login into this Fragvisor VM
 
