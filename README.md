@@ -1,5 +1,5 @@
 # Project Fragvisor
-![Fragvisor](frag.png)
+<img src="frag.png" alt="Fragvisor" width="150" height="150">
 
 
 
