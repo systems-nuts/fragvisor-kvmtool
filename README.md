@@ -1,10 +1,10 @@
-Project Fragvisor
+# Project Fragvisor
 ![Fragvisor](frag.png)
 
 
 
-Fragvisor Linux KVM tool (lkvm)
-====================
+## Fragvisor Linux KVM tool (lkvm)
+
 Based on git://git.kernel.org/pub/scm/linux/kernel/git/will/kvmtool.git
 
 Check README_POP_HYPE for setting up
@@ -13,16 +13,16 @@ run.sh: startup script
 
 Contact: Ho-Ren (Jack) Chuang horenc@vt.edu
 
-======================================================================
-Native Linux KVM tool
-=====================
+
+## Native Linux KVM tool
+
 
 kvmtool is a lightweight tool for hosting KVM guests. As a pure virtualization
 tool it only supports guests using the same architecture, though it supports
 running 32-bit guests on those 64-bit architectures that allow this.
 
-From the original announcement email:
--------------------------------------------------------
+## From the original announcement email:
+
 The goal of this tool is to provide a clean, from-scratch, lightweight
 KVM host tool implementation that can boot Linux guest images (just a
 hobby, won't be big and professional like QEMU) with no BIOS
@@ -36,8 +36,7 @@ boot a guest Linux image.
 Right now it can boot a Linux image and provide you output via a serial
 console, over the host terminal, i.e. you can use it to boot a guest
 Linux image in a terminal or over ssh and log into the guest without
-much guest or host side setup work needed.
---------------------------
+__much guest or host side setup work needed.__
 
 This is the stand-alone version which does not live inside a Linux
 kernel tree.
@@ -117,8 +116,8 @@ Another detailed example can be found in the lwn.net article:
 
 http://lwn.net/Articles/658511/
 
-Contributing
-------------
+## Contributing
+
 
 Please send patches for kvmtool to kvm@vger.kernel.org, in the usual git
 patch format, including "kvmtool" in the mail subject. "kvmtool" can be
